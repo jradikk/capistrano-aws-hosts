@@ -9,7 +9,8 @@ module Capistrano
       #
       # @return [Array<Struct(private_ip, instance_id, name>] array of instance records
       def fetch_aws_hosts(filter_override = nil)
-        role_name = filter_override || fetch(:aws_hosts_filter)
+        tag_key = filter_override || fetch(:aws_hosts_tag_key)
+        tag_value = filter_override || fetch(:aws_hosts_tag_value)
         profile = fetch(:aws_hosts_profile) || ENV['AWS_PROFILE']
         region = fetch(:aws_region) || ENV['AWS_DEFAULT_REGION']
 
@@ -20,8 +21,7 @@ module Capistrano
 
         instances = client.describe_instances(filters: [
           {name: 'instance-state-name', values: ['running']},
-          {name: 'tag-key', values: ['Role']},
-          {name: 'tag-value', values: ["*#{role_name}*"]}
+          {name: "tag:#{tag_key}", values: ["#{tag_value}"]}
         ])
 
         instances = instances.reservations.collect { |r| r.instances }.flatten
